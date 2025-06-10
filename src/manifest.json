@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Shazam Recognition Relay",
+  "version": "0.1.0",
+  "description": "Shazam Recognition Relay captures song recognition results from Shazam.com and automatically relays them to your local scripts or applications. Effortlessly integrate your music discoveries into your workflow.",
+  "permissions": ["scripting"],
+  "host_permissions": [
+    "https://www.shazam.com/*",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.shazam.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
