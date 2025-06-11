@@ -1,30 +1,29 @@
 (function () {
-  window.addEventListener("DOMContentLoaded", () => {
-    const targetNode = document.body.querySelectorAll(":scope > div")[1];
+  const handleRecognitionSuccess = (title, artist) => {
+    console.log(`曲名: ${title}, アーティスト: ${artist}`);
+    triggerServerCommunication({
+      type: "SHAZAM_RECOGNITION_SUCCESS",
+      title: title,
+      artist: artist,
+    });
+  };
 
-    const callback = function (mutationsList, observer) {
+  window.addEventListener("DOMContentLoaded", () => {
+    // Shazamの認識結果を監視するためのMutationObserverを設定
+    new MutationObserver((mutationsList, observer) => {
       for (const mutation of mutationsList) {
         if (mutation.type !== "childList") continue;
         if (mutation.addedNodes.length !== 0) {
           const node = mutation.addedNodes[0];
-          if (node.className.indexOf("Match") == -1) continue;
+          if (node.className.indexOf("MatchInterstitial") == -1) continue;
 
           const title = node.children[0].textContent.trim();
           const artist = node.children[1].textContent.trim();
 
-          console.log(`曲名: ${title}, アーティスト: ${artist}`);
-          triggerServerCommunication({
-            type: "SHAZAM_RECOGNITION_SUCCESS",
-            title: title,
-            artist: artist,
-          });
+          handleRecognitionSuccess(title, artist);
         }
       }
-    };
-
-    const observer = new MutationObserver(callback);
-
-    observer.observe(targetNode, {
+    }).observe(document.body.querySelectorAll(":scope > div")[1], {
       childList: true,
       subtree: false,
     });
