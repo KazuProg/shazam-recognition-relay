@@ -25,16 +25,51 @@
     console.log(`URLが変更されました: ${currentURL}`);
 
     if (location.pathname.indexOf("/song/") !== -1) {
-      const title =
-        document.querySelector("main h1")?.textContent?.trim() || "";
-      const artist =
-        document.querySelector("main h2")?.textContent?.trim() || "";
-      console.log(`曲名: ${title}, アーティスト: ${artist}`);
-      triggerServerCommunication({
-        type: "SHAZAM_SONG_PAGE_VIEW",
-        title: title,
-        artist: artist,
+      watchSongLoad((title, artist) => {
+        console.log(`曲名: ${title}, アーティスト: ${artist}`);
+        triggerServerCommunication({
+          type: "SHAZAM_SONG_PAGE_VIEW",
+          lang:
+            location.pathname.split("/song/")[0].replace("/", "") || "en-us",
+          title: title,
+          artist: artist,
+        });
+        if (location.pathname.startsWith("/song/")) {
+          location.href = `/ja-jp${location.pathname}`;
+        }
       });
+    }
+  };
+
+  const watchSongLoad = (callback) => {
+    const getTitleElement = () => document.querySelector("main h1");
+    const getArtistElement = () => document.querySelector("main h2");
+
+    const dispatchIfLoaded = () => {
+      const titleElement = getTitleElement();
+      const artistElement = getArtistElement();
+      if (titleElement && artistElement) {
+        const title = titleElement.textContent.trim();
+        const artist = artistElement.textContent.trim();
+        callback(title, artist);
+        return true;
+      }
+      return false;
+    };
+    const observer = new MutationObserver((mutationsList) => {
+      for (const mutation of mutationsList) {
+        if (mutation.type === "childList") {
+          const result = dispatchIfLoaded();
+          if (result) {
+            observer.disconnect();
+            return;
+          }
+        }
+      }
+    });
+
+    if (!dispatchIfLoaded()) {
+      observer.observe(document.body, { childList: true, subtree: true });
     }
   };
 
@@ -81,6 +116,8 @@
       childList: true,
       subtree: false,
     });
+
+    handleURLChange(); // 初回のURLチェックを実行
 
     console.log("MutationObserver が監視を開始しました。");
   });
